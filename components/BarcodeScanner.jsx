@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, ActivityIndicator, StyleSheet, Dimensions } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
-import { db } from "../firebaseConfig"; // Import Firestore
+import { db } from "../firebaseConfig"; // Ensure correct Firestore import
 import { doc, getDoc } from "firebase/firestore";
 import { Button, Card } from "react-native-paper";
 
@@ -11,17 +11,8 @@ const BarcodeScanner = () => {
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [fullScreen, setFullScreen] = useState(true); // ✅ Camera starts full-screen
-
-  // ✅ Define proper type for scannedData
-  const [scannedData, setScannedData] = useState<{
-    product_id: string;
-    name: string;
-    manufacturer: string;
-    expiry_date: string;
-    batch_number: string;
-    price: string;
-  } | null>(null);
+  const [fullScreen, setFullScreen] = useState(true);
+  const [scannedData, setScannedData] = useState(null); // ✅ Removed TypeScript types
 
   useEffect(() => {
     (async () => {
@@ -31,26 +22,18 @@ const BarcodeScanner = () => {
     })();
   }, [permission]);
 
-  const handleBarCodeScanned = async ({ data }: { data: string }) => {
+  const handleBarCodeScanned = async ({ data }) => { // ✅ Removed TypeScript type
     setScanned(true);
-    setFullScreen(false); // ✅ Minimize camera after scan
+    setFullScreen(false);
     setLoading(true);
     console.log("📡 Scanned Product ID:", data);
 
     try {
-      // 🔹 Fetch medicine details from Firestore using product_id
       const docRef = doc(db, "medicines", data);
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
-        setScannedData(docSnap.data() as {
-          product_id: string;
-          name: string;
-          manufacturer: string;
-          expiry_date: string;
-          batch_number: string;
-          price: string;
-        });
+        setScannedData(docSnap.data());
       } else {
         setScannedData(null);
       }
@@ -70,11 +53,10 @@ const BarcodeScanner = () => {
 
   return (
     <View style={styles.container}>
-      {/* Camera Scanner (Full-Screen or Minimized) */}
       <View
         style={[
           styles.cameraContainer,
-          fullScreen ? styles.fullCamera : styles.miniCamera, // ✅ Dynamic size
+          fullScreen ? styles.fullCamera : styles.miniCamera,
         ]}
       >
         <CameraView
@@ -84,14 +66,13 @@ const BarcodeScanner = () => {
         />
       </View>
 
-      {/* Scan Again Button */}
       {scanned && (
         <Button
           mode="contained"
           onPress={() => {
             setScanned(false);
             setScannedData(null);
-            setFullScreen(true); // ✅ Reset to full-screen when scanning again
+            setFullScreen(true);
           }}
           style={styles.scanAgainButton}
         >
@@ -99,10 +80,8 @@ const BarcodeScanner = () => {
         </Button>
       )}
 
-      {/* Loading Indicator */}
       {loading && <ActivityIndicator size="large" color="#6200EE" style={styles.loading} />}
 
-      {/* Medicine Details */}
       {scannedData && (
         <Card style={styles.card}>
           <Card.Title title="Medicine Details" />
@@ -130,19 +109,19 @@ const styles = StyleSheet.create({
   cameraContainer: {
     borderRadius: 20,
     overflow: "hidden",
-    elevation: 5, // Shadow effect
+    elevation: 5,
     backgroundColor: "#000",
   },
   fullCamera: {
-    width: width * 0.9, // ✅ 90% of screen width (adds side gaps)
-    height: height * 0.8, // ✅ 80% of screen height (lifts from bottom)
-    alignSelf: "center", // ✅ Centers horizontally
-    borderRadius: 20, // ✅ Adds rounded corners for a modern UI
-    marginVertical: height * 0.05, // ✅ Adjusts vertical centering (lifts from bottom)
+    width: width * 0.9,
+    height: height * 0.8,
+    alignSelf: "center",
+    borderRadius: 20,
+    marginVertical: height * 0.05,
   },
   miniCamera: {
-    width: "90%", // ✅ Minimized width
-    height: 200, // ✅ Minimized height
+    width: "90%",
+    height: 200,
   },
   scanner: {
     width: "100%",
@@ -159,7 +138,7 @@ const styles = StyleSheet.create({
     width: "90%",
     marginTop: 20,
     padding: 10,
-    elevation: 3, // Shadow effect
+    elevation: 3,
   },
   dataText: {
     fontSize: 16,
